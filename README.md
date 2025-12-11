@@ -54,6 +54,7 @@ vim .env
 Insert the following
 ```
 VITE_API_URL=http://localhost:8000
+VITE_GOOGLE_CLIENT_ID=your-google-client-id-here
 SYNC_INTERVAL_MS=30000
 RETRY_DELAY_MS=5000
 HEALTH_CHECK_TIMEOUT=10000
@@ -81,6 +82,9 @@ SUPABASE_URL={secret}
 SUPABASE_ANON_KEY={secret}
 DATABASE_URL=postgresql+asyncpg://{session_pooler_connection_here}
 ALLOWED_ORIGINS=http://localhost:5173
+GOOGLE_CLIENT_ID=your-google-client-id-here
+GOOGLE_CLIENT_SECRET=your-google-client-secret-here
+JWT_SECRET_KEY=your-jwt-secret-key-change-this-in-production
 ```
 
 
@@ -244,6 +248,30 @@ The application uses an **offline-first** approach with eventual consistency:
 - **Sync Queue**: IndexedDB stores pending operations that need to sync with server
 
 This architecture ensures a responsive user experience with full offline functionality while maintaining data consistency across devices when online.
+
+## Authentication
+
+The application uses **Google OAuth 2.0** for authentication. Users sign in with their Google account.
+
+### Setting up Google OAuth
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Navigate to **APIs & Services** → **OAuth consent screen** and configure it
+4. Go to **Credentials** → **Create Credentials** → **OAuth client ID**
+5. Create an OAuth 2.0 Client ID:
+   - Application type: **Web application**
+   - **Authorized JavaScript origins**: 
+     - `http://localhost:5173`
+     - `http://127.0.0.1:5173`
+     - (Add your production URL when deploying)
+   - **Authorized redirect URIs**: 
+     - `http://localhost:3000`
+     - `http://127.0.0.1:3000`
+     - (Add your production URL when deploying)
+6. Copy the **Client ID** (for frontend) and **Client Secret** (for backend)
+7. Add them to your `.env` files as shown in the installation instructions above
+8. **Restart your development server** after updating `.env` files
 
 ## Etc Notes
 Check scripts for sql schema and commands used.  

@@ -55,19 +55,10 @@ class UserBase(BaseModel):
     username: Optional[str] = Field(None, max_length=100)
 
 
-class UserCreate(BaseModel):
-    """Model for user registration."""
+class GoogleTokenRequest(BaseModel):
+    """Model for Google OAuth token verification."""
     
-    email: str = Field(..., max_length=320)
-    password: str = Field(..., min_length=8, max_length=100)
-    username: Optional[str] = Field(None, max_length=100)
-
-
-class UserLogin(BaseModel):
-    """Model for user login."""
-    
-    email: str = Field(..., max_length=320)
-    password: str = Field(..., min_length=1)
+    token: str = Field(..., description="Google ID token from OAuth flow")
 
 
 class UserResponse(UserBase):

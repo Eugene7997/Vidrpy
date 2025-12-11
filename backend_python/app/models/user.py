@@ -22,6 +22,7 @@ class User(Base):
     email = Column(String(320), nullable=False, unique=True)
     username = Column(String(100), nullable=True)
     password_hash = Column(String(255), nullable=True)
+    google_id = Column(String(255), nullable=True, unique=True)
     
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     last_modified = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)

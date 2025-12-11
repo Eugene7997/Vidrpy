@@ -35,39 +35,20 @@ class AuthAPI {
     return !!this.getToken();
   }
 
-  // Register new user
-  async register(userData: UserCreate): Promise<TokenResponse> {
-    const response = await fetch(`${this.baseUrl}/register`, {
+
+  // Login user with Google OAuth
+  async loginWithGoogle(token: string): Promise<TokenResponse> {
+    const response = await fetch(`${this.baseUrl}/google`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(userData),
+      body: JSON.stringify({ token }),
     });
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: response.statusText }));
-      throw new Error(error.detail || "Registration failed");
-    }
-
-    const tokenResponse: TokenResponse = await response.json();
-    this.storeAuth(tokenResponse);
-    return tokenResponse;
-  }
-
-  // Login user
-  async login(credentials: UserLogin): Promise<TokenResponse> {
-    const response = await fetch(`${this.baseUrl}/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(credentials),
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: response.statusText }));
-      throw new Error(error.detail || "Login failed");
+      throw new Error(error.detail || "Google authentication failed");
     }
 
     const tokenResponse: TokenResponse = await response.json();

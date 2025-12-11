@@ -22,6 +22,8 @@ class Settings:
     SUPABASE_SERVICE_ROLE_KEY: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
     DATABASE_URL: str = os.getenv("DATABASE_URL", "")
     ALLOWED_ORIGINS: list[str] = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
+    GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
+    GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
 
     def __init__(self):
         """Initialize settings and validate required configurations."""
@@ -29,6 +31,20 @@ class Settings:
             raise ValueError(
                 "DATABASE_URL environment variable is required.\n"
                 "Please create a .env file in backend_python/ directory.\n"
+            )
+        
+        if not self.GOOGLE_CLIENT_ID:
+            raise ValueError(
+                "GOOGLE_CLIENT_ID environment variable is required.\n"
+                "Please add GOOGLE_CLIENT_ID to your .env file in backend_python/ directory.\n"
+                "Get your Client ID from Google Cloud Console: https://console.cloud.google.com/\n"
+            )
+        
+        if not self.GOOGLE_CLIENT_SECRET:
+            raise ValueError(
+                "GOOGLE_CLIENT_SECRET environment variable is required.\n"
+                "Please add GOOGLE_CLIENT_SECRET to your .env file in backend_python/ directory.\n"
+                "Get your Client Secret from Google Cloud Console: https://console.cloud.google.com/\n"
             )
 
 

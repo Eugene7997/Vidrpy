@@ -7,16 +7,6 @@ export interface User {
   last_login?: string;
 }
 
-export interface UserCreate {
-  email: string;
-  password: string;
-  username?: string;
-}
-
-export interface UserLogin {
-  email: string;
-  password: string;
-}
 
 export interface TokenResponse {
   access_token: string;
