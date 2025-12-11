@@ -34,6 +34,9 @@ const VideoRecorder = () => {
 	useEffect(() => {
 		if (recorder.stream && videoRef.current) {
 			videoRef.current.srcObject = recorder.stream
+			// Mute the preview audio so recorded audio isn't played back to the user
+			videoRef.current.muted = true
+			videoRef.current.volume = 0
 		}
 	}, [recorder.stream])
 
