@@ -24,6 +24,20 @@ class VideoService:
         return result.scalars().all()
 
     @staticmethod
+    async def get_videos_by_user(db: AsyncSession, user_id: uuid.UUID) -> List[Video]:
+        """Get all videos for a specific user.
+
+        Args:
+            db: Database session
+            user_id: UUID of the user
+
+        Returns:
+            List of Video objects
+        """
+        result = await db.execute(select(Video).where(Video.user_id == user_id))
+        return result.scalars().all()
+
+    @staticmethod
     async def get_video_by_id(db: AsyncSession, video_id: uuid.UUID) -> Optional[Video]:
         """Get a video by ID.
 
@@ -40,6 +54,7 @@ class VideoService:
     @staticmethod
     async def create_video(
         db: AsyncSession,
+        user_id: uuid.UUID,
         filename: str,
         indexeddb_key: Optional[str] = None,
         cloud_path: Optional[str] = None,
@@ -50,6 +65,7 @@ class VideoService:
 
         Args:
             db: Database session
+            user_id: UUID of the user who owns the video
             filename: Name of the video file
             indexeddb_key: IndexedDB key
             cloud_path: Cloud storage path
@@ -60,6 +76,7 @@ class VideoService:
             Created Video object
         """
         video = Video(
+            user_id=user_id,
             filename=filename,
             indexeddb_key=indexeddb_key,
             cloud_path=cloud_path,

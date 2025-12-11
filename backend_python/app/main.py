@@ -4,7 +4,7 @@ from fastapi import FastAPI
 import asyncio
 from fastapi.middleware.cors import CORSMiddleware
 from app.config.settings import settings, setup_logging
-from app.routes.v1 import videos, root
+from app.routes.v1 import videos, root, auth
 from app.services.supabase import ensure_bucket_exists
 
 async def lifespan(app: FastAPI):
@@ -51,6 +51,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(root.router)
+    app.include_router(auth.router)
     app.include_router(videos.router)
 
     return app

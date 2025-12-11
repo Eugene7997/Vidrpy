@@ -6,6 +6,7 @@ import type { Video } from "@lib/types/video"
 import videoSample from "@/assets/videos/rickroll.mp4"
 import { IoMdClose } from "react-icons/io"
 import { FaCircleXmark, FaCircleCheck, FaSpinner, FaHardDrive, FaHourglassHalf } from "react-icons/fa6"
+import { authAPI } from "@lib/apis/authApi"
 
 const VideoList = () => {
 	const [videos, setVideos] = useState<Video[]>([])
@@ -64,7 +65,8 @@ const VideoList = () => {
 
 		// Also get which videos have pending operations
 		const { getPendingOperations } = await import("@lib/db/storage")
-		const ops = await getPendingOperations()
+		const user = authAPI.getUser()
+		const ops = await getPendingOperations(user?.user_id)
 		const videoIds = new Set(ops.map((op) => op.videoId))
 		setVideosWithPendingOps(videoIds)
 	}
@@ -294,7 +296,7 @@ const VideoList = () => {
 	}
 
 	return (
-		<div className="rounded-lg shadow-lg p-6">
+		<div className="rounded-lg shadow-lg p-6 bg-white">
 			{/* Header */}
 			<div className="flex justify-between items-center mb-4">
 				<div>
@@ -344,7 +346,7 @@ const VideoList = () => {
 						</thead>
 						<tbody>
 							{videos.map((video) => (
-								<tr key={video.video_id} className="border-b hover:bg-gray-50">
+								<tr key={video.video_id} className="border-b border-gray-300 hover:bg-gray-50">
 									<td className="px-4 py-3">
 										{renamingId === video.video_id ? (
 											<div className="flex gap-2">

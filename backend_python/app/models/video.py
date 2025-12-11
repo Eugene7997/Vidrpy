@@ -1,7 +1,8 @@
 """SQLAlchemy model for videos table."""
 
-from sqlalchemy import Column, String, Text, Integer, BigInteger, DateTime, CheckConstraint
+from sqlalchemy import Column, String, Text, Integer, BigInteger, DateTime, CheckConstraint, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 import uuid
 from datetime import datetime
 from app.models.base import Base
@@ -16,6 +17,11 @@ class Video(Base):
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
+        nullable=False,
+    )
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.user_id", ondelete="CASCADE"),
         nullable=False,
     )
     filename = Column(String(255), nullable=False)
@@ -53,8 +59,10 @@ class Video(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     last_modified = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    user = relationship("User", back_populates="videos")
+
     def __repr__(self) -> str:
         return (
-            f"<Video(video_id={self.video_id}, filename={self.filename}, "
+            f"<Video(video_id={self.video_id}, user_id={self.user_id}, filename={self.filename}, "
             f"upload_status_private={self.upload_status_private})>"
         )

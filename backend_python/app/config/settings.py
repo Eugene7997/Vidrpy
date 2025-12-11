@@ -11,7 +11,7 @@ except ImportError:
 
 class Settings:
     """Application settings loaded from environment variables."""
-    PROJECT_NAME: str = os.getenv("PROJECT_NAME", "Research Paper Summariser")
+    PROJECT_NAME: str = os.getenv("PROJECT_NAME", "Video Recorder App")
     PROJECT_VERSION: str = os.getenv("PROJECT_VERSION", "0.1.0")
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
     HOST: str = os.getenv("HOST", "127.0.0.1")
@@ -24,9 +24,12 @@ class Settings:
     ALLOWED_ORIGINS: list[str] = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
 
     def __init__(self):
-        """Initialize settings and validate required configurations as necessary."""
-        if not self.PROJECT_NAME:
-            raise ValueError("PROJECT_NAME environment variable is required.")
+        """Initialize settings and validate required configurations."""
+        if not self.DATABASE_URL:
+            raise ValueError(
+                "DATABASE_URL environment variable is required.\n"
+                "Please create a .env file in backend_python/ directory.\n"
+            )
 
 
 def setup_logging() -> logging.Logger:

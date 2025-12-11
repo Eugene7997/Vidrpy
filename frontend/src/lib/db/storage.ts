@@ -10,6 +10,7 @@ export interface StoredVideo {
 
 export interface PendingOperation {
   id: string;
+  userId?: string;
   type: "upload" | "rename" | "delete";
   videoId: string;
   data: Record<string, any>;
@@ -86,7 +87,7 @@ export async function getLocalVideo(videoId: string): Promise<StoredVideo | null
   });
 }
 
-export async function getLocalVideos(): Promise<Video[]> {
+export async function getLocalVideos(userId?: string): Promise<Video[]> {
   const database = await getDB();
   return new Promise((resolve, reject) => {
     const tx = database.transaction(["videos"], "readonly");
@@ -95,7 +96,11 @@ export async function getLocalVideos(): Promise<Video[]> {
 
     request.onsuccess = () => {
       const storedVideos = request.result as StoredVideo[];
-      resolve(storedVideos.map(sv => sv.video));
+      let videos = storedVideos.map(sv => sv.video);
+      if (userId) {
+        videos = videos.filter(v => v.user_id === userId);
+      }
+      resolve(videos);
     };
     request.onerror = () => reject(request.error);
   });
@@ -129,14 +134,20 @@ export async function addPendingOperation(
   });
 }
 
-export async function getPendingOperations(): Promise<PendingOperation[]> {
+export async function getPendingOperations(userId?: string): Promise<PendingOperation[]> {
   const database = await getDB();
   return new Promise((resolve, reject) => {
     const tx = database.transaction(["pendingOperations"], "readonly");
     const store = tx.objectStore("pendingOperations");
     const request = store.getAll();
 
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      let ops = request.result as PendingOperation[];
+      if (userId) {
+        ops = ops.filter(op => op.userId === userId);
+      }
+      resolve(ops);
+    };
     request.onerror = () => reject(request.error);
   });
 }
@@ -177,6 +188,20 @@ export async function getUploadProgress(videoId: string): Promise<UploadProgress
   });
 }
 
+export async function clearDatabase(): Promise<void> {
+  const database = await getDB();
+  return new Promise((resolve, reject) => {
+    const tx = database.transaction(["videos", "pendingOperations", "uploadProgress"], "readwrite");
+    
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+
+    tx.objectStore("videos").clear();
+    tx.objectStore("pendingOperations").clear();
+    tx.objectStore("uploadProgress").clear();
+  });
+}
+
 export async function getAllUploadProgress(): Promise<UploadProgress[]> {
   const database = await getDB();
   return new Promise((resolve, reject) => {
@@ -184,7 +209,7 @@ export async function getAllUploadProgress(): Promise<UploadProgress[]> {
     const store = tx.objectStore("uploadProgress");
     const request = store.getAll();
 
-    request.onsuccess = () => resolve(request.result || []);
+    request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
 }

@@ -1,5 +1,6 @@
 import { toast } from "react-toastify";
 import { videoAPI } from "@lib/apis/videoApi";
+import { authAPI } from "@lib/apis/authApi";
 import type { Video, VideoCreate } from "@lib/types/video";
 import {
   getLocalVideos,
@@ -34,8 +35,12 @@ class SyncService {
   }
 
   async createVideoLocally(videoData: VideoCreate, blob: Blob): Promise<Video> {
+    const user = authAPI.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const video: Video = {
       video_id: `local_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
+      user_id: user.user_id,
       filename: videoData.filename,
       indexeddb_key: videoData.indexeddb_key,
       cloud_path: undefined,
@@ -54,6 +59,7 @@ class SyncService {
     // Queue for upload
     await addPendingOperation({
       type: "upload",
+      userId: user.user_id,
       videoId: video.video_id,
       data: { filename: videoData.filename },
       createdAt: Date.now(),
@@ -84,7 +90,8 @@ class SyncService {
     // Queue for server sync (only if already uploaded)
     if (video.video.cloud_path) {
       // Remove any existing rename operations for this video to avoid duplicates
-      const existingOps = await getPendingOperations();
+      const user = authAPI.getUser();
+      const existingOps = await getPendingOperations(user?.user_id);
       for (const op of existingOps) {
         if (op.type === "rename" && op.videoId === videoId) {
           await removePendingOperation(op.id);
@@ -94,6 +101,7 @@ class SyncService {
 
       const opId = await addPendingOperation({
         type: "rename",
+        userId: user?.user_id,
         videoId,
         data: { newFilename },
         createdAt: Date.now(),
@@ -117,7 +125,8 @@ class SyncService {
 
     // Remove any pending operations for this video (upload, rename, etc.)
     // This is important for videos that haven't been uploaded yet
-    const pendingOps = await getPendingOperations();
+    const user = authAPI.getUser();
+    const pendingOps = await getPendingOperations(user?.user_id);
     const videoOps = pendingOps.filter(op => op.videoId === videoId);
     
     if (videoOps.length > 0) {
@@ -143,6 +152,7 @@ class SyncService {
     if (video?.video.cloud_path) {
       const opId = await addPendingOperation({
         type: "delete",
+        userId: user?.user_id,
         videoId,
         data: {},
         createdAt: Date.now(),
@@ -156,7 +166,13 @@ class SyncService {
   }
 
   async getAllVideos(includeServerVideos: boolean = true): Promise<Video[]> {
-    const localVideos = await getLocalVideos();
+    const user = authAPI.getUser();
+    if (!user) {
+      console.warn("getAllVideos called without authenticated user");
+      return [];
+    }
+
+    const localVideos = await getLocalVideos(user.user_id);
 
     if (!includeServerVideos || !(await this.isOnline())) {
       return localVideos;
@@ -167,7 +183,7 @@ class SyncService {
       console.log(`Server videos: ${serverVideos.length}`);
 
       // Get pending operations to check for pending deletes
-      const pendingOps = await getPendingOperations();
+      const pendingOps = await getPendingOperations(user.user_id);
       const pendingDeleteIds = new Set(
         pendingOps.filter(op => op.type === "delete").map(op => op.videoId)
       );
@@ -219,7 +235,7 @@ class SyncService {
             // Remove the old local record and any pending upload op for it
             try {
               await deleteVideo(matchingLocal.video_id);
-              const existingOps = await getPendingOperations();
+              const existingOps = await getPendingOperations(user.user_id);
               for (const op of existingOps) {
                 if (op.type === "upload" && op.videoId === matchingLocal.video_id) {
                   await removePendingOperation(op.id);
@@ -269,11 +285,12 @@ class SyncService {
               console.log(`Updated video ${localVideo.video_id} status to local-only`);
 
               // Queue for re-upload (check if upload operation already exists first)
-              const existingOps = await getPendingOperations();
+              const existingOps = await getPendingOperations(user.user_id);
               const hasUploadOp = existingOps.some(op => op.type === "upload" && op.videoId === localVideo.video_id);
               if (!hasUploadOp) {
                 const opId = await addPendingOperation({
                   type: "upload",
+                  userId: user.user_id,
                   videoId: localVideo.video_id,
                   data: { filename: localVideo.filename },
                   createdAt: Date.now(),
@@ -370,6 +387,12 @@ class SyncService {
       return;
     }
 
+    const user = authAPI.getUser();
+    if (!user) {
+      console.log("No user authenticated, skipping sync");
+      return;
+    }
+
     const online = await this.isOnline();
     console.log(`Backend online check: ${online}`);
 
@@ -382,7 +405,7 @@ class SyncService {
     console.log("Sync lock acquired");
 
     try {
-      const operations = await getPendingOperations();
+      const operations = await getPendingOperations(user.user_id);
       console.log(`Found ${operations.length} pending operation(s)`);
 
       if (operations.length === 0) {
@@ -649,7 +672,9 @@ class SyncService {
   }
 
   async getPendingCount(): Promise<number> {
-    const ops = await getPendingOperations();
+    const user = authAPI.getUser();
+    if (!user) return 0;
+    const ops = await getPendingOperations(user.user_id);
     return ops.length;
   }
 }

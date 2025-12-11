@@ -1,4 +1,5 @@
 import type { Video, VideoCreate, UploadProgress } from "@lib/types/video";
+import { authAPI } from "./authApi";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -6,7 +7,9 @@ class VideoAPI {
   private baseUrl = `${API_BASE_URL}/api/v1/videos`;
 
   async getVideos(): Promise<Video[]> {
-    const response = await fetch(`${this.baseUrl}/`);
+    const response = await fetch(`${this.baseUrl}/`, {
+      headers: authAPI.getAuthHeaders(),
+    });
     if (!response.ok) {
       throw new Error(`Failed to fetch videos: ${response.statusText}`);
     }
@@ -14,7 +17,9 @@ class VideoAPI {
   }
 
   async getVideo(videoId: string): Promise<Video> {
-    const response = await fetch(`${this.baseUrl}/${videoId}`);
+    const response = await fetch(`${this.baseUrl}/${videoId}`, {
+      headers: authAPI.getAuthHeaders(),
+    });
     if (!response.ok) {
       throw new Error(`Failed to fetch video: ${response.statusText}`);
     }
@@ -26,6 +31,7 @@ class VideoAPI {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...authAPI.getAuthHeaders(),
       },
       body: JSON.stringify(videoData),
     });
@@ -78,6 +84,11 @@ class VideoAPI {
       });
 
       xhr.open("POST", `${this.baseUrl}/${videoId}/upload`);
+      // Add auth header
+      const token = authAPI.getToken();
+      if (token) {
+        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+      }
       xhr.send(formData);
     });
   }
@@ -92,6 +103,7 @@ class VideoAPI {
     try {
       const response = await fetch(`${this.baseUrl}/${videoId}`, {
         method: "DELETE",
+        headers: authAPI.getAuthHeaders(),
         signal: controller.signal,
       });
 
@@ -131,6 +143,7 @@ class VideoAPI {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
+        ...authAPI.getAuthHeaders(),
       },
       body: JSON.stringify({ filename: newFilename }),
     });

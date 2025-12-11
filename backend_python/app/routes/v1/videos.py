@@ -9,6 +9,8 @@ from app.db import get_db
 from app.services.video import VideoService
 from app.services.supabase import SupabaseStorageService
 from app.types.schemas import VideoCreate, VideoResponse, VideoUpdate
+from app.utils.dependencies import get_current_user
+from app.models.user import User
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/videos")
@@ -16,26 +18,41 @@ router = APIRouter(prefix="/api/v1/videos")
 # TODO: pagination, filtering, sorting, error handling (severely lacking except for upload)
 
 @router.get("/", response_model=List[VideoResponse])
-async def get_videos(db: AsyncSession = Depends(get_db)):
-    """Get all videos."""
-    videos = await VideoService.get_all_videos(db)
+async def get_videos(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get all videos for the current user."""
+    videos = await VideoService.get_videos_by_user(db, current_user.user_id)
     return videos
 
 
 @router.get("/{video_id}", response_model=VideoResponse)
-async def get_video(video_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def get_video(
+    video_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
     """Get a specific video by ID."""
     video = await VideoService.get_video_by_id(db, video_id)
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
+    # Check if user owns this video
+    if video.user_id != current_user.user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this video")
     return video
 
 
 @router.post("/", response_model=VideoResponse)
-async def create_video(video_data: VideoCreate, db: AsyncSession = Depends(get_db)):
+async def create_video(
+    video_data: VideoCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
     """Create a new video record."""
     video = await VideoService.create_video(
         db,
+        user_id=current_user.user_id,
         filename=video_data.filename,
         indexeddb_key=video_data.indexeddb_key,
         cloud_path=video_data.cloud_path,
@@ -49,12 +66,16 @@ async def create_video(video_data: VideoCreate, db: AsyncSession = Depends(get_d
 async def upload_video(
     video_id: uuid.UUID,
     file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Upload a video file to Supabase storage."""
     video = await VideoService.get_video_by_id(db, video_id)
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
+    # Check if user owns this video
+    if video.user_id != current_user.user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to upload to this video")
 
     try:
         # Update status to uploading
@@ -127,12 +148,16 @@ async def upload_video(
 async def update_video(
     video_id: uuid.UUID,
     video_data: VideoUpdate,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Update a video record (rename, status, etc)."""
     video = await VideoService.get_video_by_id(db, video_id)
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
+    # Check if user owns this video
+    if video.user_id != current_user.user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to update this video")
 
     updated_video = await VideoService.update_video(
         db,
@@ -145,11 +170,18 @@ async def update_video(
 
 
 @router.delete("/{video_id}")
-async def delete_video(video_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def delete_video(
+    video_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
     """Delete a video record and its file from storage."""
     video = await VideoService.get_video_by_id(db, video_id)
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
+    # Check if user owns this video
+    if video.user_id != current_user.user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this video")
 
     try:
         # Extract the storage file path from cloud_path (which doesn't change on rename)
