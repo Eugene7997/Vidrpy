@@ -36,6 +36,26 @@ This README.md assumes knowledge of npm and `uv`. In case, you don't, here are s
 
 ### Installation
 
+#### Setting up Google OAuth
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Navigate to APIs & Services → OAuth consent screen and configure it
+4. Go to Credentials → Create Credentials → OAuth client ID
+5. Create an OAuth 2.0 Client ID:
+   - Application type: Web application
+   - Authorized JavaScript origins: 
+     - `http://localhost:5173`
+     - `http://127.0.0.1:5173`
+     - (Add your production URL when deploying)
+   - Authorized redirect URIs: 
+     - `http://localhost:3000`
+     - `http://127.0.0.1:3000`
+     - (Add your production URL when deploying)
+6. Copy the Client ID (for frontend) and Client Secret (for backend)
+7. Add them to your `.env` files as shown in the installation instructions above
+8. Restart your development server after updating `.env` files
+
 #### Frontend
 1. Navigate into frontend folder
 ```powershell
@@ -87,7 +107,6 @@ GOOGLE_CLIENT_SECRET=your-google-client-secret-here
 JWT_SECRET_KEY=your-jwt-secret-key-change-this-in-production
 ```
 
-
 ### Running
 
 Run frontend.
@@ -133,6 +152,9 @@ This video web application provides a comprehensive solution for recording, mana
 - **Operation Queue**: Pending operations (uploads, renames, deletes) are queued and executed when connection is restored
 - **Connection Status**: Visual indicator showing online/offline status
 - **Pending Operations Counter**: Display of pending operations waiting to sync
+
+### Authentication
+The application uses **Google OAuth 2.0** for authentication. Users sign in with their Google account.
 
 ## Glance at tech involved
 <u>Frontend</u>  
@@ -248,30 +270,6 @@ The application uses an **offline-first** approach with eventual consistency:
 - **Sync Queue**: IndexedDB stores pending operations that need to sync with server
 
 This architecture ensures a responsive user experience with full offline functionality while maintaining data consistency across devices when online.
-
-## Authentication
-
-The application uses **Google OAuth 2.0** for authentication. Users sign in with their Google account.
-
-### Setting up Google OAuth
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Navigate to **APIs & Services** → **OAuth consent screen** and configure it
-4. Go to **Credentials** → **Create Credentials** → **OAuth client ID**
-5. Create an OAuth 2.0 Client ID:
-   - Application type: **Web application**
-   - **Authorized JavaScript origins**: 
-     - `http://localhost:5173`
-     - `http://127.0.0.1:5173`
-     - (Add your production URL when deploying)
-   - **Authorized redirect URIs**: 
-     - `http://localhost:3000`
-     - `http://127.0.0.1:3000`
-     - (Add your production URL when deploying)
-6. Copy the **Client ID** (for frontend) and **Client Secret** (for backend)
-7. Add them to your `.env` files as shown in the installation instructions above
-8. **Restart your development server** after updating `.env` files
 
 ## Etc Notes
 Check scripts for sql schema and commands used.  
