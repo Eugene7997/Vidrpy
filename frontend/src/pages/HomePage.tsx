@@ -5,12 +5,16 @@ import Header from "@components/Header";
 import Footer from "@components/Footer";
 import { FaList, FaVideo } from "react-icons/fa6";
 
-const HomePage = () => {
+interface HomePageProps {
+  onLogout: () => void;
+}
+
+const HomePage = ({ onLogout }: HomePageProps) => {
   const [activeTab, setActiveTab] = useState<"record" | "videos" | "display">("record");
 
   return (
-    <div className="min-h-screen">
-      <Header />
+    <div className="min-h-screen bg-gray-50">
+      <Header onLogout={onLogout} />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -34,7 +38,7 @@ const HomePage = () => {
                 : "bg-gray-100 hover:bg-gray-300"
             }`}
           >
-            <FaList className="inline -translate-y-[2px]" /> My Videos
+            <FaList className="inline -translate-y-0.5" /> My Videos
           </button>
         </div>
 
