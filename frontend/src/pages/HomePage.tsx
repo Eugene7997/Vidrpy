@@ -7,14 +7,15 @@ import { FaList, FaVideo } from "react-icons/fa6";
 
 interface HomePageProps {
   onLogout: () => void;
+  onAccountDeleted?: () => void;
 }
 
-const HomePage = ({ onLogout }: HomePageProps) => {
+const HomePage = ({ onLogout, onAccountDeleted }: HomePageProps) => {
   const [activeTab, setActiveTab] = useState<"record" | "videos" | "display">("record");
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header onLogout={onLogout} />
+      <Header onLogout={onLogout} onAccountDeleted={onAccountDeleted} />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

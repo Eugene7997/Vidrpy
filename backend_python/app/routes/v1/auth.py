@@ -1,6 +1,6 @@
 """Authentication routes for Google OAuth 2.0."""
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 import logging
 
@@ -84,3 +84,45 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
         User information
     """
     return UserResponse.model_validate(current_user)
+
+
+@router.delete("/me")
+async def delete_account(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> Response:
+    """Delete the current user's account and all associated data.
+    
+    This will:
+    - Delete all videos from Supabase storage
+    - Delete all video records from database
+    - Delete the user account
+    
+    Args:
+        current_user: Current authenticated user
+        db: Database session
+        
+    Returns:
+        HTTP 204 No Content response
+        
+    Raises:
+        HTTPException: If deletion fails
+    """
+    try:
+        success = await UserService.delete_user(db, current_user.user_id)
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+        
+        logger.info(f"User account deleted: {current_user.email}")
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete user account {current_user.user_id}: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete account",
+        )

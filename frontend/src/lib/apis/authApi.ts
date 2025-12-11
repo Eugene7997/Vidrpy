@@ -87,6 +87,33 @@ class AuthAPI {
     return user;
   }
 
+  // Delete user account
+  async deleteAccount(): Promise<void> {
+    const token = this.getToken();
+    if (!token) {
+      throw new Error("Not authenticated");
+    }
+
+    const response = await fetch(`${this.baseUrl}/me`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        this.clearAuth();
+        throw new Error("Session expired");
+      }
+      const error = await response.json().catch(() => ({ detail: response.statusText }));
+      throw new Error(error.detail || "Failed to delete account");
+    }
+
+    // Clear local auth data after successful deletion
+    this.clearAuth();
+  }
+
   // Get auth headers for API requests
   getAuthHeaders(): HeadersInit {
     const token = this.getToken();

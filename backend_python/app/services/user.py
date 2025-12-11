@@ -4,8 +4,14 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.models.user import User
+from app.services.video import VideoService
+from app.services.supabase import SupabaseStorageService
 from datetime import datetime
 import uuid
+import logging
+from urllib.parse import urlparse
+
+logger = logging.getLogger(__name__)
 
 
 class UserService:
@@ -134,3 +140,55 @@ class UserService:
             await db.commit()
             await db.refresh(user)
         return user
+
+    @staticmethod
+    async def delete_user(db: AsyncSession, user_id: uuid.UUID) -> bool:
+        """Delete a user and all their videos.
+        
+        This method:
+        1. Deletes all video files from Supabase storage
+        2. Deletes all video records from database (cascade)
+        3. Deletes the user record
+
+        Args:
+            db: Database session
+            user_id: UUID of the user
+
+        Returns:
+            True if deleted successfully, False if user not found
+        """
+        user = await UserService.get_user_by_id(db, user_id)
+        if not user:
+            return False
+        
+        try:
+            # Get all videos for this user
+            videos = await VideoService.get_videos_by_user(db, user_id)
+            
+            # Delete video files from Supabase storage
+            for video in videos:
+                if video.cloud_path:
+                    try:
+                        # Extract storage path from cloud_path URL
+                        parsed_url = urlparse(video.cloud_path)
+                        path_parts = parsed_url.path.strip('/').split('/')
+                        if 'videos' in path_parts:
+                            videos_index = path_parts.index('videos')
+                            if videos_index + 1 < len(path_parts):
+                                storage_path = '/'.join(path_parts[videos_index + 1:])
+                                await SupabaseStorageService.delete_video(storage_path)
+                                logger.info(f"Deleted video file from storage: {storage_path}")
+                    except Exception as e:
+                        logger.error(f"Failed to delete video file for video {video.video_id}: {str(e)}")
+                        # Continue with deletion even if storage deletion fails
+            
+            # Delete user (cascade will delete video records)
+            await db.delete(user)
+            await db.commit()
+            
+            logger.info(f"Successfully deleted user {user_id} and all associated videos")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to delete user {user_id}: {str(e)}", exc_info=True)
+            await db.rollback()
+            raise

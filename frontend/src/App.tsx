@@ -57,11 +57,18 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<HomePage onLogout={async () => {
-          await clearDatabase();
-          authAPI.logout();
-          setIsAuthenticated(false);
-        }} />} />
+        <Route path="/" element={<HomePage 
+          onLogout={async () => {
+            await clearDatabase();
+            authAPI.logout();
+            setIsAuthenticated(false);
+          }}
+          onAccountDeleted={async () => {
+            await clearDatabase();
+            authAPI.logout();
+            setIsAuthenticated(false);
+          }}
+        />} />
       </Routes>
       <ToastContainer
         position="bottom-right"
