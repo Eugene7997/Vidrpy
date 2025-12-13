@@ -2,8 +2,9 @@
 
 ## Background
 
-I want to develop a simple application that streams video from the user's webcam and provides a button to start and stop recording. When recording stops, the recorded video should be saved locally on the user's device. Then, the application will automatically upload the recorded video to a server once connectivity is available,
-The application may display the upload status and/or progress. Lastly, the application shows a list of recorded videos for the user to perform video playback, renaming and deletion.
+A mini project done across a few weeks to play around with web videos.   
+This is a simple application that streams video from the user's webcam and provides a button to start and stop recording. When recording stops, the recorded video should be saved locally on the user's device. Then, the application will automatically upload the recorded video to a server once connectivity is available,
+The application displays the upload status and progress. Lastly, the application shows a list of recorded videos for the user to perform video playback, renaming and deletion.
 
 ### Functional requirements
 - [ ] User can click a start recording button. Starts video recording.
@@ -22,7 +23,7 @@ The application may display the upload status and/or progress. Lastly, the appli
 
 ## Getting started
 
-<u>Environment tested</u>  
+<ins>Environment tested</ins>  
 Windows 10 OS.  
 python 3.13.3.  
 uv 0.8.13.  
@@ -157,11 +158,11 @@ This video web application provides a comprehensive solution for recording, mana
 The application uses **Google OAuth 2.0** for authentication. Users sign in with their Google account.
 
 ## Glance at tech involved
-<u>Frontend</u>  
+<ins>Frontend</ins>  
 TypeScript, ReactJS, Tailwindcss, IndexedDB.   
-<u>Backend</u>  
+<ins>Backend</ins>  
 Python, FastAPI, SQLAlchemy, psycopg2, Supabase client library.  
-<u>Cloud</u>  
+<ins>Cloud</ins>  
 Supabase S3 compatible object bucket for video storage. PostgreSQL for video records.  
 
 ## Architecture Overview
