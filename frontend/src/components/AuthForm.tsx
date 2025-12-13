@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { GoogleLogin } from "@react-oauth/google";
+import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { authAPI } from "@lib/apis/authApi";
 
 interface AuthFormProps {
@@ -10,8 +10,13 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
   const [error, setError] = useState("");
   const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
-  const handleGoogleSuccess = async (credentialResponse: { credential: string }) => {
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     setError("");
+    
+    if (!credentialResponse.credential) {
+      setError("No credential received from Google");
+      return;
+    }
     
     try {
       await authAPI.loginWithGoogle(credentialResponse.credential);
