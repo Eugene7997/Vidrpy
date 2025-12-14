@@ -2,6 +2,9 @@
 
 A mini project done across a few weeks to play around with web videos and AP system.   
 
+## Demo
+https://github.com/user-attachments/assets/e052952a-2775-4f30-a502-d30fa421ab9d
+
 ## Background
 This is a simple application that streams video from the user's webcam and provides a button to start and stop recording. When recording stops, the recorded video should be saved locally on the user's device. Then, the application will automatically upload the recorded video to a server once connectivity is available,
 The application displays the upload status and progress. Lastly, the application shows a list of recorded videos for the user to perform video playback, renaming and deletion.
